@@ -1,0 +1,35 @@
+
+// @ts-ignore
+import Stripe from 'https://cdn.skypack.dev/stripe?dts';
+// @ts-ignore
+import { serve } from "https://deno.land/std/http/server.ts";
+
+const stripe = new Stripe('sk_test_51N07TQF9A34Q9DnZZ1C6U700HhgFQ9vHumtfc0URgR5QIuXzDKHLmojkaKs4noeVtZMptEpXl1i1dCtlrECTURGn00PtiroYQ6', {
+  apiVersion: '2020-08-27',
+});
+
+async function handleRequest(req: Request): Promise<Response> {
+  if (req.method === 'GET') {
+    try {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: 1000, // Montant en centimes
+        currency: 'eur',
+        payment_method_types: ['card'],
+      });
+
+      return new Response(JSON.stringify({ clientSecret: paymentIntent.client_secret }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  return new Response(null, { status: 405 });
+}
+
+console.log('Server running on http://localhost:8000');
+serve(handleRequest);
